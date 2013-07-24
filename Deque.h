@@ -609,7 +609,7 @@ class MyDeque {
             // <your code> DONE
             if(_dFront) {
                 clear();
-                _a.deallocate(_dFront, capacity());
+                _a.deallocate(_dFront, _dBack - _dFront);
             }
             assert(valid());
         }
@@ -632,14 +632,14 @@ class MyDeque {
                 copy(rhs.begin(), rhs.end(), begin());
                 resize(rhs.size());
             }
-            else if(rhs.size() <= capacity()) {
+            else if(rhs.size() <= _dBack - _dFront()) {
                 copy(rhs.begin(), rhs.begin() + size(), begin());
                 _e = uninitialized_copy(_a, rhs.begin() + size(), rhs.end(), end());
             }
             else {
                 clear();
-                reserve(rhs.size());
-                _e = uninitialized_fill(_a, rhs.begin(), rhs.end(), begin());
+                MyDeque lhs(rhs);
+                swap(lhs);
             }
             assert(valid());
             return *this;}
@@ -708,7 +708,7 @@ class MyDeque {
 
         /**
          * <your documentation> DONE
-         returns const ref to last element
+         returns const ref to last element 
          */
         const_reference back () const {
             return const_cast<MyDeque*>(this)->back();}
@@ -765,7 +765,7 @@ class MyDeque {
 
         /**
          * <your documentation> DONE
-         returns iterator of the last element
+         returns iterator of the last element + 1
          */
         iterator end () {
             // <your code> DONE
@@ -774,7 +774,7 @@ class MyDeque {
 
         /**
          * <your documentation> DONE
-         returns const iterator of the last element
+         returns const iterator of the last element + 
          */
         const_iterator end () const {
             // <your code> DONE
@@ -786,12 +786,22 @@ class MyDeque {
         // -----
 
         /**
-         * <your documentation>
+         * <your documentation> DONE
+         removes element at i, returns i
          */
-        iterator erase (iterator) {
-            // <your code>
+        iterator erase (iterator i) {
+            // <your code> DONE
+            assert(!empty());
+            if(i + 1 == end())
+                pop_back();
+            else if (i == begin())
+                pop_front();
+            else {
+                copy(i + 1, end(), i);
+                resize(size() - 1);
+            }
             assert(valid());
-            return iterator();
+            return iterator(this, i);
         }
 
         // -----
@@ -822,23 +832,22 @@ class MyDeque {
         // ------
 
         /**
-         * <your documentation>
+         * <your documentation> DONE
+         inserts single element of value v, at i, returns i
          */
-        iterator insert (iterator, const_reference) {
-            // <your code>
-            assert(valid());
-            return iterator();}
-
-        size_type capacity () const {
-            return _dBack - _dFront;
-        }
-
-        void reserve (size_type c) {
-            if (c > capacity()) {
-                MyDeque x(*this/*, c*/);
-                swap(x);
+        iterator insert (iterator i, const_reference v) {
+            // <your code> DONE
+            if (i == end()) 
+                push_back(v);
+            else if (i == begin())
+                push_front(v);
+            else {
+                resize(size() + 1);
+                copy(i, end(), i + 1);
+                *i = v;
             }
             assert(valid());
+            return iterator(this, i);
         }
 
         // ---
@@ -846,17 +855,24 @@ class MyDeque {
         // ---
 
         /**
-         * <your documentation>
+         * <your documentation> DONE
+         removes last element from deque
          */
         void pop_back () {
-            // <your code>
+            // <your code> DONE
+            assert(!empty());
+            resize(size() - 1);
             assert(valid());}
 
         /**
-         * <your documentation>
+         * <your documentation> DONE
+         removes first element from deque
          */
         void pop_front () {
-            // <your code>
+            // <your code> DONE
+            assert(!empty());
+            destroy(_a, begin(), begin() + 1);
+            ++begin();
             assert(valid());}
 
         // ----
@@ -864,16 +880,19 @@ class MyDeque {
         // ----
 
         /**
-         * <your documentation>
+         * <your documentation> DONE
+         adds element of value v to back of deque
          */
-        void push_back (const_reference) {
-            // <your code>
+        void push_back (const_reference v) {
+            // <your code> DONE
+            resize(size() + 1, v);
             assert(valid());}
 
         /**
          * <your documentation>
+         adds element of value v to front of deque
          */
-        void push_front (const_reference) {
+        void push_front (const_reference v) {
             // <your code>
             assert(valid());}
 
