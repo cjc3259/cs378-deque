@@ -5,16 +5,16 @@
 // ----------------------------
 
 /*
-To test the program:
-    % ls /usr/include/cppunit/
-    ...
-    TestFixture.h
-    ...
-    % locate libcppunit.a
-    /usr/lib/libcppunit.a
-    % g++ -pedantic -std=c++0x -Wall Deque.c++ TestDeque.c++ -o TestDeque -lcppunit -ldl
-    % valgrind TestDeque > TestDeque.out
-*/
+ * TestDeque
+ *
+ * To compile this, use the command
+ * g++ -pedantic -std=c++0x -Wall TestDeque.c++ -o TestDeque -lgtest -lgtest_main -lpthread
+ *
+ * Then it can run with
+ * TestDeque
+ *
+ * It will work on any machine with gtest and the precompiled libraries installed
+ */
 
 // --------
 // includes
@@ -27,47 +27,47 @@ To test the program:
 #include <stdexcept> // invalid_argument
 #include <string>    // ==
 
-#include "cppunit/extensions/HelperMacros.h" // CPPUNIT_TEST, CPPUNIT_TEST_SUITE, CPPUNIT_TEST_SUITE_END
-#include "cppunit/TestFixture.h"             // TestFixture
-#include "cppunit/TextTestRunner.h"          // TestRunner
+#include "gtest/gtest.h"                        // Google Test framework
+
 
 #include "Deque.h"
+// includes from Deque.h
+#include <cassert>
+#include <iterator>
+#include <memory>
+#include <utility>
+
+#define class struct
+#define protected public
+#define private public
+
 
 // ---------
 // TestDeque
 // ---------
 
+typedef testing::Types<std::deque<int>, MyDeque<int> > MyDeques;
+
 template <typename C>
-struct TestDeque : CppUnit::TestFixture {
-    // ----
-    // size
-    // ----
 
-    void test_size () {
-        const C x;
-        CPPUNIT_ASSERT(x.size() == 0);}
+// TYPED_TEST_CASE(DequeTest, MyDeques);
 
-    // -----
-    // suite
-    // -----
+class DequeTest : public testing::Test {
+    const C x;
+    typedef typename C::size_type size_type;
+    const size_type s;
+    DequeTest() : s(100) {}
+    // DequeTest() : s() {}
+};
 
-    CPPUNIT_TEST_SUITE(TestDeque);
-    CPPUNIT_TEST(test_size);
-    CPPUNIT_TEST_SUITE_END();};
+TYPED_TEST_CASE(DequeTest, MyDeques);
 
-// ----
-// main
-// ----
+TYPED_TEST (DequeTest, allocator) {
+    // const C x;
+    EXPECT_EQ(0, this->x.size());
 
-int main () {
-    using namespace std;
-    ios_base::sync_with_stdio(false);        // turn off synchronization with C I/O
-    cout << "TestDeque.c++" << endl << endl;
+}
 
-    CppUnit::TextTestRunner tr;
-    tr.addTest(TestDeque< MyDeque<int> >::suite());
-    tr.addTest(TestDeque<   deque<int> >::suite());
-    tr.run();
-
-    cout << "Done." << endl;
-    return 0;}
+// TEST (Deque, allocator) {
+//     const C x;
+// }
