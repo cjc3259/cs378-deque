@@ -17,6 +17,7 @@
 #include <memory>    // allocator
 #include <stdexcept> // out_of_range
 #include <utility>   // !=, <=, >, >=
+#include <iostream> 
 
 // -----
 // using
@@ -137,17 +138,21 @@ class MyDeque {
         // <your data> DONE
 
         allocator_type _a; // inner array allocator
-        pointer _iaFront; // pointer to beginning of inner array
-        pointer _iaBack; // pointer to end of inner array
-        pointer _dFront; // point to very front of deque
-        pointer _dBack; // point to very back of deque
+        pointer _dFront; // pointer to very front of deque
+        pointer _dBack; // pointer to very back of deque + 1
         pointer _b; // pointer to beginning of actual data
-        pointer _e; // pointer to end of actual data
+        pointer _e; // pointer to end of actual data + 1
+        pointer _thisBack; // pointer to back of current inner array
+        pointer dF_e; // pointer to _b + s NOTE could be out of bounds!! only used to determine _e
     
         oa_allocator_type _oa; // outer array allocator
-        oa_pointer _oaFront; // point to front of outer array
-        oa_pointer _oaBack; // pointer to back of outer array
+        oa_pointer _oaFront; // pointer to front of outer array
+        oa_pointer _oaBack; // pointer to back of outer array + 1
 
+        size_type dSize; // number of elements
+        size_type numArray; // number of inner arrays
+        size_type sizeArray; // size of inner arrays
+ 
     private:
         // -----
         // valid
@@ -155,7 +160,12 @@ class MyDeque {
 
         bool valid () const {
             // <your code> DONE
-            return (!_iaFront && !_iaBack && !_dFront && !_dBack && !_b && !_e && !_oaFront && !_oaBack) || ((_dFront <= _b) && (_dBack >= _e) && (_b < _e));}
+            return (!_dFront && !_dBack && !_b && !_e && !_oaFront && !_oaBack) || ((_dFront <= _b) && (_b <= _e) && (_e <= _dBack));}
+
+        // returns the size of the outer array
+        size_type oaSize () const {
+            return _oaBack - _oaFront;
+            }  
 
     public:
         // --------
@@ -224,6 +234,8 @@ class MyDeque {
                 // <your data> DONE
                 MyDeque* _d;
                 size_t _i; // index
+                pointer _p;
+
 
             private:
                 // -----
@@ -243,11 +255,11 @@ class MyDeque {
                  * <your documentation> DONE
                  constructor
                  */
-                iterator (/* <your arguments> DONE */ MyDeque* d, size_t i) :
+                iterator (MyDeque* d, size_t i) :
                         _d (d),
-                        _i (i) {
+                        _i (i)  {
                     // <your code> DONE 
-                    // no code
+                    _p = (*_d)._b + _i;
                     assert(valid());
                 }
 
@@ -268,7 +280,7 @@ class MyDeque {
                     // <your code> DONE
                     // dummy is just to be able to compile the skeleton, remove it
                     // static value_type dummy;
-                    return (*_d)[_i];}
+                    return (*_p);}
 
                 // -----------
                 // operator ->
@@ -291,7 +303,7 @@ class MyDeque {
                  */
                 iterator& operator ++ () {
                     // <your code> DONE
-                    ++_i;
+                    ++_p;
                     assert(valid());
                     return *this;}
 
@@ -315,7 +327,7 @@ class MyDeque {
                  */
                 iterator& operator -- () {
                     // <your code> DONE
-                    --_i;
+                    --_p;
                     assert(valid());
                     return *this;}
 
@@ -339,7 +351,7 @@ class MyDeque {
                  */
                 iterator& operator += (difference_type d) {
                     // <your code> DONE
-                    _i += d;
+                    _p += d;
                     assert(valid());
                     return *this;}
 
@@ -353,7 +365,7 @@ class MyDeque {
                  */
                 iterator& operator -= (difference_type d) {
                     // <your code> DONE
-                    _i -= d;
+                    _p -= d;
                     assert(valid());
                     return *this;}};
 
@@ -422,8 +434,10 @@ class MyDeque {
                 // ----
 
                 // <your data> DONE
-                MyDeque* _d;
+                const MyDeque* _d;
                 size_t _i; // index
+                pointer _p;
+
 
             private:
                 // -----
@@ -443,11 +457,12 @@ class MyDeque {
                  * <your documentation> DONE
                  constructor
                  */
-                const_iterator (/* <your arguments> DONE */ const MyDeque* d, size_t i) :
+                const_iterator (/* <your arguments> DONE */ const MyDeque* d, size_t i) : 
                         _d (d),
-                        _i (i) {
-                    // <your code> DONE
-                    // no code
+                        _i (i),
+                        _p ((*_d)._b + _i)  
+                        {
+                    // <your code> DONE 
                     assert(valid());
                 }
 
@@ -468,7 +483,7 @@ class MyDeque {
                     // <your code> DONE
                     // dummy is just to be able to compile the skeleton, remove it
                     // static value_type dummy;
-                    return (*_d)[_i];}
+                    return *_p;}
 
                 // -----------
                 // operator ->
@@ -491,6 +506,8 @@ class MyDeque {
                  */
                 const_iterator& operator ++ () {
                     // <your code> DONE
+
+                    // THIS KILLS TWO OF MY DEQUE == TESTS???  SHOULD BE ++_p;
                     ++_i;
                     assert(valid());
                     return *this;}
@@ -515,7 +532,7 @@ class MyDeque {
                  */
                 const_iterator& operator -- () {
                     // <your code> DONE
-                    --_i;
+                    --_p;
                     assert(valid());
                     return *this;}
 
@@ -539,7 +556,7 @@ class MyDeque {
                  */
                 const_iterator& operator += (difference_type d) {
                     // <your code> DONE
-                    _i += d;
+                    _p += d;
                     assert(valid());
                     return *this;}
 
@@ -553,7 +570,7 @@ class MyDeque {
                  */
                 const_iterator& operator -= (difference_type d) {
                     // <your code>
-                    _i += d;
+                    _p -= d;
                     assert(valid());
                     return *this;}};
 
@@ -571,7 +588,8 @@ class MyDeque {
                 _oa() {
             // <your code> DONE
             _oaFront = _oaBack = 0; 
-            _iaFront = _iaBack = _dFront = _dBack = _b = _e = 0;
+            _dFront = _dBack = _b = _e = 0;
+            dSize = numArray = sizeArray = 0;
             assert(valid());
         }
 
@@ -579,23 +597,142 @@ class MyDeque {
          * <your documentation> DONE
          constructs a deque given an allocator, size and value
          */
-        explicit MyDeque (size_type s, const_reference v = value_type(), const allocator_type& a = allocator_type()) {
+        explicit MyDeque (size_type s, const_reference v = value_type(), const allocator_type& a = allocator_type()) :
+                _a(a),
+                _oa() {
             // <your code>
-            assert(valid());}
+            // determine number of inner arrays required
+
+            // if size == 0, like the above constructor
+            if(s == 0) {
+                _oaFront = _oaBack = 0; 
+                _dFront = _dBack = _b = _e = 0;
+                dSize = 0;
+            }
+            else {
+                // determine number of inner arrays 
+                _oaFront = _oaBack = 0; 
+                _dFront = _dBack = _b = _e = 0;
+                size_type carry = 0;
+                sizeArray = 10;
+
+                if(s%sizeArray > 0)
+                    carry = 1;
+                numArray = s/sizeArray + carry; 
+                assert(numArray >= 1);
+
+                // allocate outer array
+                _oaFront = _oa.allocate(numArray);
+                _oaBack = _oaFront + numArray;
+
+                // construct outer array
+                _oa.construct(_oaFront);
+
+                // set pointer to beginning of allocated space
+                _dFront = _a.allocate(sizeArray*numArray);
+
+                // allocate inner arrays
+                for (size_type i = 0; i < numArray; ++i) {
+                    _oaFront[i] = &(_dFront[i*sizeArray]);
+                }
+
+                // set pointer to end of the allocated space
+                _dBack = _oaFront[numArray - 1] + sizeArray; 
+
+                // pointer to the end of current array
+                _thisBack = _oaFront[0] + sizeArray;
+
+                // pointers to the beginning and end of data
+                _b = _dFront;
+                _e = _b + s;
+
+                // construct inner arrays
+                if (s <= sizeArray)
+                    uninitialized_fill(_a, _b, _e, v);
+                else {
+                    pointer t_b = _b;
+                    size_type array = 0;
+                    while (_b != _e) {
+                        if (_b == _thisBack) {
+                            ++array;
+                            _b = _oaFront[array];
+                            _thisBack = _oaFront[array] + sizeArray;
+                        } 
+                        else {
+                            _a.construct(&*_b, v);
+                            ++_b;
+                        }
+                    }
+                    _b = t_b;
+                }
+            }
+
+            // size varible
+            dSize = s;
+            assert(valid());
+        }
 
         /**
          * <your documentation> DONE
          copy constructor
          */
         MyDeque (const MyDeque& that) :
-                _a(that._a) {
-            // <your code> DONE
-            _oaFront = _oaBack = 0; 
-            _iaFront = _iaBack = 0; 
-            _b = _dFront = _a.allocate(that.size());
-            _e = _dBack = _b + that.size();
-            uninitialized_copy(_a, that.begin(), that.end(), begin());
-            assert(valid());}
+                _a(that._a),
+                _oa() {
+            // <your code>
+
+            // size data
+            numArray = that.numArray;
+            dSize = that.dSize;
+            sizeArray = that.sizeArray;
+
+            // allocate outer array
+            _oaFront = _oa.allocate(numArray); 
+            _oaBack = _oaFront + numArray;
+
+            // construct outer array
+            _oa.construct(_oaFront);
+
+            // pointer to front of allocated space
+            _dFront = _a.allocate(sizeArray*numArray);
+
+            //allocate inner arrays
+            for (size_type i = 0; i < numArray; ++i) {
+                _oaFront[i] = &(_dFront[i*sizeArray]);
+            }       
+
+            // pointers to end of allocated space 
+            _dBack = _oaFront[numArray - 1] + sizeArray;
+
+            _thisBack = _oaFront[0] + sizeArray;
+
+            // data pointers
+            _b = _dFront;
+            _e = _b + dSize;
+
+            // construct inner arrays
+            if(dSize <= sizeArray) 
+                uninitialized_copy(_a, that._b, that._e, _b);
+            else {
+                pointer t_b = _b;
+                size_type array = 0;
+                size_type otherB = 0;
+                while (_b != _e) {
+                    if (_b == _thisBack) {
+                        ++array;
+                        _b = _oaFront[array];
+                        _thisBack = _oaFront[array] + sizeArray;
+                    }
+                    else {
+                        _a.construct(&*_b, *(that._b + otherB));
+                        ++_b;
+                        ++otherB;
+                    }
+                }
+                _b = t_b;
+            }
+            assert(valid());
+        }
 
         // ----------
         // destructor
@@ -609,8 +746,11 @@ class MyDeque {
             // <your code> DONE
             if(_dFront) {
                 clear();
+                // _dBack = &*destroy(_a, _dFront, _dBack);
                 _a.deallocate(_dFront, _dBack - _dFront);
             }
+            _oaBack = &*destroy(_oa, _oaFront, _oaBack);
+            _oa.deallocate(_oaFront, _oaBack - _oaFront);
             assert(valid());
         }
 
@@ -628,13 +768,13 @@ class MyDeque {
                 return *this;
             if(rhs.size() == size())
                 copy(rhs.begin(), rhs.end(), begin());
-            else if(rhs.size < size()) {
+            else if(rhs.size() < size()) {
                 copy(rhs.begin(), rhs.end(), begin());
                 resize(rhs.size());
             }
-            else if(rhs.size() <= _dBack - _dFront()) {
+            else if(rhs.size() <= (unsigned)(_dBack - _dFront)) {
                 copy(rhs.begin(), rhs.begin() + size(), begin());
-                _e = uninitialized_copy(_a, rhs.begin() + size(), rhs.end(), end());
+                _e = &*uninitialized_copy(_a, rhs.begin() + size(), rhs.end(), end());
             }
             else {
                 clear();
@@ -656,7 +796,8 @@ class MyDeque {
             // <your code> DONE
             // dummy is just to be able to compile the skeleton, remove it
             // static value_type dummy;
-            return begin()[index];}
+            return *(_dFront + index);
+        }
 
         /**
          * <your documentation> DONE
@@ -677,8 +818,6 @@ class MyDeque {
             // <your code> DONE
             // dummy is just to be able to compile the skeleton, remove it
             // static value_type dummy;
-            if (index >= size())
-                throw out_of_range("deque::_M_range_check");
             return (*this)[index];
         }
 
@@ -703,7 +842,7 @@ class MyDeque {
             // dummy is just to be able to compile the skeleton, remove it
             // static value_type dummy;
             assert(!empty());
-            return *(end() - 1);
+            return *(_e - 1);
         }
 
         /**
@@ -723,7 +862,8 @@ class MyDeque {
          */
         iterator begin () {
             // <your code> DONE
-            return iterator(/* <your arguments> DONE */ this, 0);}
+            return iterator(this, 0);
+        }
 
         /**
          * <your documentation> DONE
@@ -731,7 +871,8 @@ class MyDeque {
          */
         const_iterator begin () const {
             // <your code> DONE
-            return const_iterator(/* <your arguments> DONE */ this, 0);}
+            return const_iterator(this, 0);
+        }
 
         // -----
         // clear
@@ -769,7 +910,7 @@ class MyDeque {
          */
         iterator end () {
             // <your code> DONE
-            return iterator(/* <your arguments> DONE */ this, size());
+            return iterator(this, size());
         }
 
         /**
@@ -778,7 +919,7 @@ class MyDeque {
          */
         const_iterator end () const {
             // <your code> DONE
-            return const_iterator(/* <your arguments> DONE */ this, size());
+            return const_iterator(this, size());
         }
 
         // -----
@@ -801,7 +942,7 @@ class MyDeque {
                 resize(size() - 1);
             }
             assert(valid());
-            return iterator(this, i);
+            return iterator(this, 0);
         }
 
         // -----
@@ -817,7 +958,7 @@ class MyDeque {
             // dummy is just to be able to compile the skeleton, remove it
             // static value_type dummy;
             assert(!empty());
-            return *begin();
+            return *_dFront;
         }
 
         /**
@@ -847,7 +988,7 @@ class MyDeque {
                 *i = v;
             }
             assert(valid());
-            return iterator(this, i);
+            return iterator(this, 0);
         }
 
         // ---
@@ -862,7 +1003,8 @@ class MyDeque {
             // <your code> DONE
             assert(!empty());
             resize(size() - 1);
-            assert(valid());}
+            assert(valid());
+        }
 
         /**
          * <your documentation> DONE
@@ -872,7 +1014,7 @@ class MyDeque {
             // <your code> DONE
             assert(!empty());
             destroy(_a, begin(), begin() + 1);
-            ++begin();
+            ++_b;
             assert(valid());}
 
         // ----
@@ -889,11 +1031,23 @@ class MyDeque {
             assert(valid());}
 
         /**
-         * <your documentation>
+         * <your documentation> DONE
          adds element of value v to front of deque
          */
         void push_front (const_reference v) {
             // <your code>
+            if (_b != _dFront) {
+                _b = &*uninitialized_fill(_a, _b - 1, _b, v);
+                --_b;
+            }
+            else {
+                MyDeque x(size() + sizeArray);
+                // NOTE: dFront index is at -sizeArray NOT zero..  
+                uninitialized_copy(x._a, _b, _e, x._b + sizeArray);
+                x._b = x._b + sizeArray;
+                swap(x);
+                push_front(v);
+            }
             assert(valid());}
 
         // ------
@@ -905,17 +1059,22 @@ class MyDeque {
          */
         void resize (size_type s, const_reference v = value_type()) {
             // <your code>
-            // if (s == size())
-            //     return;
-            // if (s < size())
-            //     _e = my_destroy(_a, begin() + s, end());
-            // else if (s <= capacity())
-            //     _e = uninitialized_fill(_a, end(), begin() + s, v);
-            // else {
-            //     reserve(max(2*size(), s));
-            //     resize(s, v);
-            // }
-            // assert(valid());
+            if (s == size())
+                return;
+            else if (s < size()){
+                _e = &*destroy(_a, _b + s, _e);
+                // size() = _e - _b;
+            }
+            else if (s > size() && s <= (unsigned)(_dBack - _dFront)) {
+                _e = uninitialized_fill(_a, _e, _b + s, v); // space has already been allocated
+            }
+            else {
+                MyDeque x(s, v);
+                uninitialized_copy(x._a, _b, _e, x._b);
+                swap(x);
+                resize(s, v);
+            }
+            assert(valid());
         }
 
         // ----
@@ -940,18 +1099,16 @@ class MyDeque {
          */
         void swap (MyDeque& that) {
             // <your code> DONE
-            // like vector in class?
             if (_a == that._a) {
                 std::swap(_oaFront, that._oaFront);
                 std::swap(_oaBack, that._oaBack);
-                // std::swap(_oa, that._oa);
-                std::swap(_iaFront, that._iaFront);
-                std::swap(_iaBack, that._iaBack);
-                std::swap(_dFront, that._dBack);
+                std::swap(_dFront, that._dFront);
                 std::swap(_dBack, that._dBack);
                 std::swap(_b, that._b);
                 std::swap(_e, that._e);
-
+                std::swap(dSize, that.dSize);
+                std::swap(numArray, that.numArray);
+                std::swap(sizeArray, that.sizeArray);
             }
             else {
                 MyDeque x(*this);
